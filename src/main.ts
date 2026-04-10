@@ -65,7 +65,7 @@ const MCP_PROTOCOL_VERSION = "2024-11-05";
 const PORT_MIN = 10000;
 const PORT_MAX = 65535;
 const MAX_PORT_ATTEMPTS = 50;
-const PLUGIN_VERSION = "0.2.0";
+const PLUGIN_VERSION = "0.3.0";
 const DEBOUNCE_MS = 100;
 const LOG_PREFIX = "claude-ide";
 
@@ -92,6 +92,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 		try {
 			await this.startServer();
 			this.setupSelectionTracking();
+			process.env.CLAUDE_CODE_SSE_PORT = String(this.port);
 			console.info(`[${LOG_PREFIX}] Started — port=${this.port}, lock=${this.lockFilePath}, vault=${this.getVaultPath()}`);
 			new Notice("Claude Code IDE: connected on port " + this.port);
 		} catch (e) {
@@ -102,6 +103,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 
 	async onunload() {
 		console.info(`[${LOG_PREFIX}] Unloading — closing server on port ${this.port}`);
+		delete process.env.CLAUDE_CODE_SSE_PORT;
 		this.stopServer();
 		console.debug(`[${LOG_PREFIX}] Unloaded`);
 	}

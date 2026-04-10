@@ -41,9 +41,21 @@ This builds the plugin and copies it into your vault's plugin directory. Enable 
 
 ## Connecting Claude Code
 
-Claude Code discovers the plugin through the `CLAUDE_CODE_SSE_PORT` environment variable. VS Code sets this automatically in its integrated terminal. Obsidian doesn't, so you need to pass it yourself.
+Claude Code discovers the plugin through the `CLAUDE_CODE_SSE_PORT` environment variable. VS Code sets this automatically in its integrated terminal. This plugin does the same for Obsidian.
 
-### Shell helper (recommended)
+### With an integrated terminal plugin (recommended)
+
+Install a terminal plugin that runs inside Obsidian, such as [Obsidian Terminal](https://github.com/polyipseity/obsidian-terminal).
+
+When this plugin loads, it sets `process.env.CLAUDE_CODE_SSE_PORT` on the Obsidian process. Since Obsidian runs in Electron, any terminal plugin that spawns shells via Node's `child_process` inherits this environment automatically. That means you can just run `claude` from the integrated terminal and it connects to the IDE server with no extra setup.
+
+When the plugin unloads, the env var is cleaned up.
+
+### Without an integrated terminal plugin
+
+If you run Claude Code from an external terminal (iTerm, Terminal.app, etc.), you need to pass the port yourself. The plugin still writes the lock file, so you can use a shell helper or pass it manually.
+
+#### Shell helper
 
 Add this to `~/.zshrc` or `~/.bashrc`:
 
@@ -69,7 +81,7 @@ Run `claude-obsidian` from your vault directory instead of `claude`.
 
 The function scans lock files for one that matches `ideName: "Obsidian"` and your current directory, checks the Obsidian process is still alive, and passes the port to Claude Code. If no server is found, it falls back to a normal session.
 
-### Manual
+#### Manual
 
 ```bash
 cat ~/.claude/ide/*.lock | grep Obsidian
@@ -80,10 +92,11 @@ CLAUDE_CODE_SSE_PORT=<port> claude
 ## How it works
 
 1. On load, the plugin picks a random port, starts a WebSocket server on `127.0.0.1`, and writes a lock file with the port, auth token, and vault path.
-2. Claude Code reads the lock file, connects over WebSocket, and authenticates with the token via the `x-claude-code-ide-authorization` header.
-3. The protocol is JSON-RPC 2.0 over WebSocket (MCP spec `2024-11-05`).
-4. Selection tracking uses a CodeMirror 6 `EditorView.updateListener` for cursor/selection changes and Obsidian's `active-leaf-change` event for tab switches. Updates are debounced at 100ms.
-5. On unload, everything is torn down and the lock file is removed.
+2. It sets `process.env.CLAUDE_CODE_SSE_PORT` so that terminals spawned from within Obsidian inherit the port automatically.
+3. Claude Code reads the lock file, connects over WebSocket, and authenticates with the token via the `x-claude-code-ide-authorization` header.
+4. The protocol is JSON-RPC 2.0 over WebSocket (MCP spec `2024-11-05`).
+5. Selection tracking uses a CodeMirror 6 `EditorView.updateListener` for cursor/selection changes and Obsidian's `active-leaf-change` event for tab switches. Updates are debounced at 100ms.
+6. On unload, `CLAUDE_CODE_SSE_PORT` is removed from the environment, the server is shut down, and the lock file is deleted.
 
 ## Development
 
