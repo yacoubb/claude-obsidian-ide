@@ -1,7 +1,7 @@
 {
 	"id": "claude-code-obsidian",
 	"name": "Claude Code IDE",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"minAppVersion": "1.4.11",
 	"description": "Exposes Obsidian editor state to Claude Code CLI via the IDE integration protocol.",
 	"author": "Yacoub Ahmed",

@@ -1,12 +1,13 @@
 {
 	"name": "claude-code-obsidian",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Claude Code IDE integration for Obsidian",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"deploy": "bash deploy.sh"
 	},
 	"keywords": [],
 	"license": "MIT",

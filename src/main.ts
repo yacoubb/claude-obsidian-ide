@@ -44,11 +44,17 @@ interface JsonRpcResponse {
 	error?: { code: number; message: string; data?: unknown };
 }
 
+interface ToolResult {
+	content: { type: string; text: string }[];
+	deferred?: boolean;
+	unique_key?: string;
+}
+
 interface ToolDef {
 	name: string;
 	description: string;
 	inputSchema: Record<string, unknown>;
-	handler: (params: Record<string, unknown>) => { content: { type: string; text: string }[] };
+	handler: (params: Record<string, unknown>) => ToolResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,7 +65,7 @@ const MCP_PROTOCOL_VERSION = "2024-11-05";
 const PORT_MIN = 10000;
 const PORT_MAX = 65535;
 const MAX_PORT_ATTEMPTS = 50;
-const PLUGIN_VERSION = "0.1.0";
+const PLUGIN_VERSION = "0.2.0";
 const DEBOUNCE_MS = 100;
 const LOG_PREFIX = "claude-ide";
 
@@ -442,7 +448,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 	// Tool handlers (bound to plugin instance via .call(this, ...))
 	// -----------------------------------------------------------------------
 
-	private handleGetCurrentSelection(): { content: { type: string; text: string }[] } {
+	private handleGetCurrentSelection(): ToolResult {
 		const sel = this.captureSelection();
 		if (!sel) {
 			return { content: [{ type: "text", text: JSON.stringify({ success: false, message: "No active editor found" }) }] };
@@ -450,7 +456,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 		return { content: [{ type: "text", text: JSON.stringify({ success: true, ...sel }) }] };
 	}
 
-	private handleGetLatestSelection(): { content: { type: string; text: string }[] } {
+	private handleGetLatestSelection(): ToolResult {
 		const sel = this.latestSelection ?? this.captureSelection();
 		if (!sel) {
 			return { content: [{ type: "text", text: JSON.stringify({ success: false, message: "No selection available" }) }] };
@@ -458,7 +464,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 		return { content: [{ type: "text", text: JSON.stringify({ success: true, ...sel }) }] };
 	}
 
-	private handleGetOpenEditors(): { content: { type: string; text: string }[] } {
+	private handleGetOpenEditors(): ToolResult {
 		const tabs: Record<string, unknown>[] = [];
 		const activeFile = this.app.workspace.getActiveFile();
 
@@ -500,7 +506,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 		return { content: [{ type: "text", text: JSON.stringify({ tabs }) }] };
 	}
 
-	private handleGetWorkspaceFolders(): { content: { type: string; text: string }[] } {
+	private handleGetWorkspaceFolders(): ToolResult {
 		const vaultPath = this.getVaultPath();
 		const vaultName = this.app.vault.getName();
 		return {
@@ -515,7 +521,7 @@ export default class ClaudeCodeIdePlugin extends Plugin {
 		};
 	}
 
-	private handleOpenFile(params: Record<string, unknown>): { content: { type: string; text: string }[] } {
+	private handleOpenFile(params: Record<string, unknown>): ToolResult {
 		const filePath = params.filePath as string | undefined;
 		if (!filePath) throw new Error("Missing filePath parameter");
 
@@ -643,7 +649,7 @@ const TOOLS: ToolDef[] = [
 		},
 		handler: ClaudeCodeIdePlugin.prototype["handleOpenFile"] as any,
 	},
-	// --- Stubbed tools ---
+	// --- Deferred / stubbed tools ---
 	{
 		name: "openDiff",
 		description: "Open a diff view comparing old file content with new file content",
@@ -659,7 +665,11 @@ const TOOLS: ToolDef[] = [
 			required: ["old_file_path", "new_file_path", "new_file_contents", "tab_name"],
 			additionalProperties: false,
 		},
-		handler: () => ({ content: [{ type: "text", text: "DIFF_REJECTED" }] }),
+		handler: (params) => ({
+			content: [{ type: "text", text: "" }],
+			deferred: true,
+			unique_key: params.tab_name as string,
+		}),
 	},
 	{
 		name: "getDiagnostics",
