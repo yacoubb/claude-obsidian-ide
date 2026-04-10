@@ -24,7 +24,9 @@ Specifically:
 | `getWorkspaceFolders` | Returns the vault path |
 | `openFile` | Opens a file, optionally jumping to a line or text pattern |
 
-These are stubbed (no-op responses, for protocol compatibility): `openDiff`, `getDiagnostics`, `checkDocumentDirty`, `saveDocument`, `closeAllDiffTabs`.
+These are stubbed (no-op responses, for protocol compatibility): `getDiagnostics`, `checkDocumentDirty`, `saveDocument`, `closeAllDiffTabs`.
+
+`openDiff` returns a deferred response, which causes Claude Code to fall back to the terminal approval prompt for edit requests.
 
 ## Installation
 
@@ -32,17 +34,10 @@ These are stubbed (no-op responses, for protocol compatibility): `openDiff`, `ge
 git clone https://github.com/<your-username>/claude-obsidian-ide.git
 cd claude-obsidian-ide
 npm install
-npm run build
+bash install.sh /path/to/vault
 ```
 
-Then copy the built files into your vault:
-
-```bash
-mkdir -p /path/to/vault/.obsidian/plugins/claude-code-obsidian
-cp main.js manifest.json /path/to/vault/.obsidian/plugins/claude-code-obsidian/
-```
-
-Enable "Claude Code IDE" in Settings > Community plugins.
+This builds the plugin and copies it into your vault's plugin directory. Enable "Claude Code IDE" in Settings > Community plugins.
 
 ## Connecting Claude Code
 
@@ -93,8 +88,9 @@ CLAUDE_CODE_SSE_PORT=<port> claude
 ## Development
 
 ```bash
-npm run dev    # watch mode with source maps
-npm run build  # production build
+npm run dev              # watch mode with source maps
+npm run build            # production build
+bash install.sh <vault>  # build + copy to vault
 ```
 
 ## Requirements

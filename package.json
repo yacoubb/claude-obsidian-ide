@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"deploy": "bash deploy.sh"
+		"install-plugin": "bash install.sh"
 	},
 	"keywords": [],
 	"license": "MIT",
